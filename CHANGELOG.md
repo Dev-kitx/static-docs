@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/Dev-kitx/staticnest-cli/compare/v0.1.6...v0.1.7) (2026-03-26)
+
+
+### Bug Fixes
+
+* theme, toc and update readme: ([#18](https://github.com/Dev-kitx/staticnest-cli/issues/18)) ([203d8e2](https://github.com/Dev-kitx/staticnest-cli/commit/203d8e2b6719a479520252496b4eb77a1b502864))
+
 ## [0.1.6](https://github.com/Dev-kitx/staticnest-cli/compare/v0.1.5...v0.1.6) (2026-03-15)
 
 
