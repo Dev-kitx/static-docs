@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from html import escape
 
+from pygments.formatters import HtmlFormatter
+
 
 THEME_PRESETS = {
     "nest": {
@@ -418,16 +420,6 @@ code, pre {
   cursor: pointer;
 }
 
-.tok-comment { color: #9ca3af; }
-.tok-keyword { color: #7c3aed; font-weight: 600; }
-.tok-string { color: #047857; }
-.tok-number { color: #b45309; }
-.tok-key { color: #1d4ed8; }
-.tok-operator { color: #6d28d9; }
-.tok-punct { color: #6b7280; }
-.tok-variable { color: #db2777; }
-.tok-flag { color: #0f766e; }
-.tok-command { color: #b91c1c; font-weight: 600; }
 
 .article-shell blockquote {
   margin: 1.5rem 0;
@@ -486,13 +478,15 @@ code, pre {
 
 .toc-link {
   display: block;
-  padding: 0.26rem 0;
+  padding: 0.26rem 0.5rem;
+  border-left: 2px solid transparent;
   color: var(--muted);
   font-size: 0.88rem;
 }
 
 .toc-link.active {
-  color: var(--text);
+  border-left-color: var(--active-text);
+  color: var(--active-text);
   font-weight: 600;
 }
 
@@ -513,12 +507,23 @@ code, pre {
   font-size: 0.86rem;
 }
 
+.search-wrapper {
+  position: relative;
+}
+
 .search-results {
   display: none;
-  margin: 1rem 0 1.5rem;
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 400px;
+  overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--surface);
+  box-shadow: 0 10px 32px rgba(17, 24, 39, 0.12);
 }
 
 .search-results.visible {
@@ -708,7 +713,8 @@ document.querySelectorAll('[data-code-copy]').forEach((button) => {
 });
 
 if (searchInput && searchResults) {
-  const pages = JSON.parse(document.querySelector('#search-index').textContent);
+  let pages = [];
+  try { pages = JSON.parse(document.querySelector('#search-index').textContent); } catch (_e) {}
   const renderMatches = (matches) => {
     searchResults.innerHTML = matches.map((page) => `
       <a class="search-result" href="${page.url}">
@@ -767,17 +773,34 @@ if (searchInput && searchResults) {
 }
 
 if (sections.length) {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      const id = entry.target.getAttribute('id');
-      tocLinks.forEach((link) => {
-        link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
-      });
-    });
-  }, { rootMargin: '-20% 0px -65% 0px', threshold: 1.0 });
+  function updateActiveToc() {
+    const readingLine = 80;
+    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
 
-  sections.forEach((section) => observer.observe(section));
+    let active = sections[0].id;
+    if (atBottom) {
+      // At the bottom of the page: activate the last section
+      active = sections[sections.length - 1].id;
+    } else {
+      // Pick the heading closest to the reading line
+      let minDist = Infinity;
+      sections.forEach((section) => {
+        const dist = Math.abs(section.getBoundingClientRect().top - readingLine);
+        if (dist < minDist) {
+          minDist = dist;
+          active = section.id;
+        }
+      });
+    }
+
+    tocLinks.forEach((link) => {
+      link.classList.toggle('active', link.getAttribute('href') === `#${active}`);
+    });
+  }
+  window.addEventListener('scroll', updateActiveToc, { passive: true });
+  document.addEventListener('scroll', updateActiveToc, { passive: true });
+  window.addEventListener('resize', updateActiveToc, { passive: true });
+  requestAnimationFrame(updateActiveToc);
 }
 """
 
@@ -827,10 +850,13 @@ DEFAULT_TEMPLATE = """<!DOCTYPE html>
       </div>
       <div class="topbar-actions">
         <nav class="top-nav">{{ top_nav_html }}</nav>
-        <label class="search-shell">
-          <input type="search" placeholder="Search documentation..." data-search-input />
-          <span class="search-kbd">K</span>
-        </label>
+        <div class="search-wrapper">
+          <label class="search-shell">
+            <input type="search" placeholder="Search documentation..." data-search-input />
+            <span class="search-kbd">K</span>
+          </label>
+          <div class="search-results" data-search-results></div>
+        </div>
         {{ header_action_html }}
       </div>
     </header>
@@ -844,7 +870,6 @@ DEFAULT_TEMPLATE = """<!DOCTYPE html>
         <div class="article-toolbar">
           <button class="copy-link" type="button" data-copy-link><span>Copy page</span></button>
         </div>
-        <div class="search-results" data-search-results></div>
         <article class="article-shell">
           {{ page_heading_html }}
           {{ article_html }}
@@ -894,10 +919,15 @@ def get_theme_preset(name: str | None, accent: str | None = None) -> dict[str, s
     return preset
 
 
-def render_css(theme_tokens: dict[str, str]) -> str:
+def get_pygments_css(style: str = "xcode") -> str:
+    return HtmlFormatter(style=style).get_style_defs("pre.highlight")
+
+
+def render_css(theme_tokens: dict[str, str], pygments_style: str = "xcode") -> str:
     rendered = BASE_CSS
     for key, value in theme_tokens.items():
         rendered = rendered.replace(f"{{{{ {key} }}}}", value)
+    rendered += "\n" + get_pygments_css(pygments_style)
     return rendered
 
 
@@ -958,7 +988,7 @@ def render_page(
     title = escape(f"{page_title} | {site_title}")
     description_text = escape(page_summary or description)
     page_heading_html = f"<h1>{escape(page_title)}</h1>" if page_title else ""
-    search_json = escape(json.dumps(search_index))
+    search_json = json.dumps(search_index).replace("</", "<\\/")
     custom_css_tag = f'<link rel="stylesheet" href="{current_url}assets/custom.css" />' if has_custom_css else ""
     custom_js_tag = f'<script src="{current_url}assets/custom.js"></script>' if has_custom_js else ""
     live_reload_tag = ""
