@@ -4,17 +4,19 @@ from dataclasses import dataclass
 from html import escape
 import re
 
+from pygments import highlight as pygments_highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+from pygments.util import ClassNotFound
+
 
 HEADING_SLUG_RE = re.compile(r"[^a-z0-9]+")
 INLINE_CODE_RE = re.compile(r"`([^`]+)`")
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 BOLD_RE = re.compile(r"\*\*([^*]+)\*\*")
 ITALIC_RE = re.compile(r"(?<!\*)\*([^*]+)\*(?!\*)")
-GENERIC_KEYWORDS = {
-    "def", "class", "return", "if", "else", "elif", "for", "while", "in",
-    "import", "from", "try", "except", "finally", "with", "as", "true",
-    "false", "none", "null",
-}
+
+_formatter = HtmlFormatter(nowrap=True)
 
 
 @dataclass
@@ -57,208 +59,15 @@ def summarize(lines: list[str]) -> str:
     return ""
 
 
-def wrap_token(token_type: str, value: str) -> str:
-    return f'<span class="tok-{token_type}">{escape(value)}</span>'
-
-
-def split_comment_outside_quotes(line: str) -> tuple[str, str]:
-    in_single = False
-    in_double = False
-    escaped = False
-    for index, char in enumerate(line):
-        if escaped:
-            escaped = False
-            continue
-        if char == "\\":
-            escaped = True
-            continue
-        if char == "'" and not in_double:
-            in_single = not in_single
-            continue
-        if char == '"' and not in_single:
-            in_double = not in_double
-            continue
-        if char == "#" and not in_single and not in_double:
-            return line[:index], line[index:]
-    return line, ""
-
-
-def highlight_json_line(line: str) -> str:
-    result: list[str] = []
-    index = 0
-    key_match = re.match(r'^(\s*)"([^"]+)"(\s*:\s*)', line)
-    if key_match:
-        result.append(escape(key_match.group(1)))
-        result.append(wrap_token("key", f'"{key_match.group(2)}"'))
-        result.append(escape(key_match.group(3)))
-        index = key_match.end()
-    while index < len(line):
-        remaining = line[index:]
-        for token_type, pattern in (
-            ("string", r'^"([^"\\]|\\.)*"'),
-            ("number", r"^-?\d+(\.\d+)?"),
-            ("keyword", r"^(true|false|null)\b"),
-            ("punct", r"^[{}\[\],:]"),
-        ):
-            match = re.match(pattern, remaining)
-            if match:
-                result.append(wrap_token(token_type, match.group(0)))
-                index += len(match.group(0))
-                break
-        else:
-            result.append(escape(line[index]))
-            index += 1
-    return "".join(result)
-
-
-def highlight_config_line(line: str, separator: str) -> str:
-    if not line.strip():
-        return ""
-    content, comment_raw = split_comment_outside_quotes(line)
-    comment = wrap_token("comment", comment_raw) if comment_raw else ""
-
-    key_match = re.match(rf"^(\s*)([A-Za-z0-9_.-]+)(\s*{re.escape(separator)}\s*)(.*)$", content)
-    if not key_match:
-        return escape(content) + comment
-
-    prefix, key, divider, value = key_match.groups()
-    highlighted_value = highlight_code_inline(value)
-    return "".join(
-        [
-            escape(prefix),
-            wrap_token("key", key),
-            escape(divider),
-            highlighted_value,
-            comment,
-        ]
-    )
-
-
-def highlight_code_inline(value: str) -> str:
-    result: list[str] = []
-    index = 0
-    while index < len(value):
-        remaining = value[index:]
-        for token_type, pattern in (
-            ("string", r'^"([^"\\]|\\.)*"'),
-            ("string", r"^'([^'\\]|\\.)*'"),
-            ("number", r"^-?\d+(\.\d+)?"),
-            ("keyword", r"^(true|false|null|none)\b"),
-            ("operator", r"^[=\[\]{}(),]"),
-        ):
-            match = re.match(pattern, remaining, flags=re.IGNORECASE)
-            if match:
-                result.append(wrap_token(token_type, match.group(0)))
-                index += len(match.group(0))
-                break
-        else:
-            result.append(escape(value[index]))
-            index += 1
-    return "".join(result)
-
-
-def highlight_markdown_line(line: str) -> str:
-    if re.match(r"^\s*#{1,6}\s", line):
-        hashes, rest = re.match(r"^(\s*#{1,6}\s)(.*)$", line).groups()
-        return wrap_token("keyword", hashes) + escape(rest)
-    if re.match(r"^\s*[-*]\s", line):
-        bullet, rest = re.match(r"^(\s*[-*]\s)(.*)$", line).groups()
-        return wrap_token("punct", bullet) + escape(rest)
-    return escape(line)
-
-
-def highlight_bash_line(line: str) -> str:
-    stripped = line.lstrip()
-    indent = line[: len(line) - len(stripped)]
-    if not stripped:
-        return ""
-    if stripped.startswith("#"):
-        return escape(indent) + wrap_token("comment", stripped)
-
-    result = [escape(indent)]
-    index = 0
-    command_highlighted = False
-    while index < len(stripped):
-        remaining = stripped[index:]
-        for token_type, pattern in (
-            ("comment", r"^#.*$"),
-            ("string", r'^"([^"\\]|\\.)*"'),
-            ("string", r"^'([^'\\]|\\.)*'"),
-            ("variable", r"^\$[A-Za-z_][A-Za-z0-9_]*"),
-            ("flag", r"^--?[A-Za-z0-9_-]+"),
-            ("operator", r"^(\|\||&&|[|=])"),
-            ("number", r"^\d+"),
-        ):
-            match = re.match(pattern, remaining)
-            if match:
-                result.append(wrap_token(token_type, match.group(0)))
-                index += len(match.group(0))
-                break
-        else:
-            word = re.match(r"^[A-Za-z0-9_./:-]+", remaining)
-            if word:
-                token = word.group(0)
-                token_type = "command" if not command_highlighted else "text"
-                result.append(wrap_token(token_type, token) if token_type != "text" else escape(token))
-                command_highlighted = True
-                index += len(token)
-            else:
-                result.append(escape(stripped[index]))
-                index += 1
-    return "".join(result)
-
-
-def highlight_pythonish_line(line: str) -> str:
-    result: list[str] = []
-    index = 0
-    while index < len(line):
-        remaining = line[index:]
-        for token_type, pattern in (
-            ("comment", r"^#.*$"),
-            ("string", r'^"([^"\\]|\\.)*"'),
-            ("string", r"^'([^'\\]|\\.)*'"),
-            ("number", r"^-?\d+(\.\d+)?"),
-            ("keyword", r"^(def|class|return|if|else|elif|for|while|in|import|from|try|except|finally|with|as)\b"),
-            ("operator", r"^(==|!=|<=|>=|=|\+|-|\*|/|:|->)"),
-        ):
-            match = re.match(pattern, remaining)
-            if match:
-                result.append(wrap_token(token_type, match.group(0)))
-                index += len(match.group(0))
-                break
-        else:
-            word = re.match(r"^[A-Za-z_][A-Za-z0-9_]*", remaining)
-            if word:
-                token = word.group(0)
-                result.append(
-                    wrap_token("keyword", token) if token.lower() in GENERIC_KEYWORDS else escape(token)
-                )
-                index += len(token)
-            else:
-                result.append(escape(line[index]))
-                index += 1
-    return "".join(result)
-
-
 def highlight_code(language: str, code: str) -> str:
-    normalized = language.strip().lower()
-    highlighter = {
-        "bash": highlight_bash_line,
-        "sh": highlight_bash_line,
-        "shell": highlight_bash_line,
-        "yaml": lambda line: highlight_config_line(line, ":"),
-        "yml": lambda line: highlight_config_line(line, ":"),
-        "toml": lambda line: highlight_config_line(line, "="),
-        "json": highlight_json_line,
-        "md": highlight_markdown_line,
-        "markdown": highlight_markdown_line,
-        "python": highlight_pythonish_line,
-        "py": highlight_pythonish_line,
-    }.get(normalized, highlight_pythonish_line if normalized in {"txt", "text"} else None)
-
-    if highlighter is None:
+    lang = language.strip().lower()
+    if not lang:
         return escape(code)
-    return "\n".join(highlighter(line) for line in code.splitlines())
+    try:
+        lexer = get_lexer_by_name(lang, stripnl=False)
+        return pygments_highlight(code, lexer, _formatter).rstrip("\n")
+    except ClassNotFound:
+        return escape(code)
 
 
 def render_code_block(language: str, code_lines: list[str]) -> str:
@@ -273,7 +82,7 @@ def render_code_block(language: str, code_lines: list[str]) -> str:
         f'<span class="code-block-language">{language_badge}</span>'
         '<button class="code-copy-button" type="button" data-code-copy>Copy</button>'
         "</div>"
-        f"<pre><code{language_class}>{code_html}</code></pre>"
+        f'<pre class="highlight"><code{language_class}>{code_html}</code></pre>'
         "</div>"
     )
 
@@ -290,6 +99,7 @@ def render_markdown(text: str) -> RenderedPage:
     code_lines: list[str] = []
     title = "Untitled"
     primary_heading_rendered = False
+    slug_counts: dict[str, int] = {}
 
     def flush_paragraph() -> None:
         nonlocal paragraph
@@ -349,7 +159,10 @@ def render_markdown(text: str) -> RenderedPage:
             flush_list()
             level = len(heading_match.group(1))
             text_value = heading_match.group(2).strip()
-            slug = slugify(text_value)
+            base_slug = slugify(text_value)
+            count = slug_counts.get(base_slug, 0)
+            slug_counts[base_slug] = count + 1
+            slug = base_slug if count == 0 else f"{base_slug}-{count}"
             headings.append(Heading(level=level, text=text_value, slug=slug))
             if title == "Untitled" and level == 1:
                 title = text_value

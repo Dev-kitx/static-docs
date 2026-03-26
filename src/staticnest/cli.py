@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from staticnest.devserver import serve_site
@@ -8,10 +9,38 @@ from staticnest.scaffold import init_project
 from staticnest.site import DeployOptions, build_site, gh_deploy_site, publish_site
 
 
+def _get_version() -> str:
+    try:
+        return version("staticnest-cli")
+    except PackageNotFoundError:
+        return "dev"
+
+
+def _print_version() -> None:
+    ver = _get_version()
+    print()
+    print("  ◆  s t a t i c")
+    print("  ███╗   ██╗███████╗███████╗████████╗")
+    print("  ████╗  ██║██╔════╝██╔════╝╚══██╔══╝")
+    print("  ██╔██╗ ██║█████╗  ███████╗   ██║   ")
+    print("  ██║╚██╗██║██╔══╝  ╚════██║   ██║   ")
+    print("  ██║ ╚████║███████╗███████║   ██║   ")
+    print("  ╚═╝  ╚═══╝╚══════╝╚══════╝   ╚═╝   ")
+    print()
+    print(f"  version {ver}  ·  Pure-Python docs builder")
+    print("  " + "─" * 40)
+    print()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="staticnest",
         description="Build a static documentation site with the Staticnest nest theme.",
+    )
+    parser.add_argument(
+        "-V", "--version",
+        action="store_true",
+        help="Show version and exit.",
     )
     parser.add_argument(
         "command",
@@ -50,6 +79,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.version:
+        _print_version()
+        return 0
+
     if args.command == "init":
         try:
             project_dir = init_project(Path(args.path))
