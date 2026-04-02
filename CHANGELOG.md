@@ -1,5 +1,16 @@
 # Changelog
 
+
+## [v0.2.0] - 2026-04-02
+
+### ✨ Features
+
+- use reusable workflow and app token (#20) ([2d92a68](https://github.com/Dev-kitx/staticnest-cli/commit/2d92a68c272271139ae786de45a5917613012905)) by @aakashbasa
+
+### 📦 Build
+
+- fix build issues (#21) ([7083724](https://github.com/Dev-kitx/staticnest-cli/commit/7083724fcf94b915accc4c50a27a73100a37538c)) by @aakashbasa
+
 ## [0.1.7](https://github.com/Dev-kitx/staticnest-cli/compare/v0.1.6...v0.1.7) (2026-03-26)
 
 
