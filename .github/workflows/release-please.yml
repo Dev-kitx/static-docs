@@ -35,13 +35,26 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
 
     steps:
-      - uses: googleapis/release-please-action@v4
+      - name: Generate GitHub App token
+        uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - uses: Dev-kitx/smart-gh-release@v1
         id: release
         with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
+          token: ${{ steps.app-token.outputs.token }}
+          auto_version: true
+          auto_release: false
+          include_contributors: true
+
+      - name: Summary
+        run: |
+          echo "Tag:   ${{ steps.release.outputs.tag_name }}"
+          echo "Bump:  ${{ steps.release.outputs.bump_level }}"
+          echo "URL:   ${{ steps.release.outputs.release_url }}"
+          echo "Files: ${{ steps.release.outputs.assets_uploaded }}"

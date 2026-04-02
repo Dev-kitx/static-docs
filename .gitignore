@@ -9,3 +9,5 @@ tests/__pycache__/
 .coverage
 src/staticnest_cli.egg-info/
 .pytest_cache/
+report.xml
+coverage.xml
