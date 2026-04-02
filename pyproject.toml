@@ -16,6 +16,15 @@ maintainers = [
 license = "MIT"
 license-files = ["LICENSE"]
 
+[project.urls]
+homepage = "https://github.com/Dev-kitx/staticnest-cli"
+source = "https://github.com/Dev-kitx/staticnest-cli"
+download = "https://github.com/Dev-kitx/staticnest-cli/releases"
+changelog = "https://github.com/Dev-kitx/staticnest-cli/blob/main/CHANGELOG.md"
+releasenotes = "https://github.com/Dev-kitx/staticnest-cli/releases"
+documentation = "https://github.com/Dev-kitx/staticnest-cli#readme"
+issues = "https://github.com/Dev-kitx/staticnest-cli/issues"
+
 [tool.setuptools_scm]
 # Basic config https://setuptools-scm.readthedocs.io/en/latest/
 version_scheme = "only-version"
@@ -26,6 +35,9 @@ addopts = "-q"
 testpaths = [
     "tests"
 ]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "coverage", "mypy>=1.10", "types-setuptools"]
 
 [project.scripts]
 staticnest = "staticnest.cli:main"

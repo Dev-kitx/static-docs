@@ -33,19 +33,12 @@ jobs:
       - name: Install package and test dependencies
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION: "0.0.0"
-        run: |
-          pip install -e . pytest pytest-cov
+        run: make setup-env
 
       - name: Run tests with coverage
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION: "0.0.0"
-        run: |
-          python -m pytest tests/ \
-            --cov=staticnest \
-            --cov-report=term-missing \
-            --cov-report=xml \
-            --tb=short \
-            -v
+        run: make run-pytest
 
       - name: Upload coverage report
         if: matrix.python-version == '3.11'
