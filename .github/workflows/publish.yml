@@ -10,5 +10,5 @@ jobs:
       package_name: staticnest-cli
       python_version: "3.11"
       test_command: "make setup-env && make run-pytest"
-      build_command: "pip install build && pyproject-build"
+      build_command: "pip install build && pyproject-build"      
       
