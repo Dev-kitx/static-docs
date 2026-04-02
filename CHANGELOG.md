@@ -1,6 +1,13 @@
 # Changelog
 
 
+
+## [v0.2.1] - 2026-04-02
+
+### ⏪ Reverts
+
+- pypi release reusable workflow (#23) ([ac496cf](https://github.com/Dev-kitx/staticnest-cli/commit/ac496cf9981ee80df43b57df2d140b7adbd51024)) by @aakashbasa
+
 ## [v0.2.0] - 2026-04-02
 
 ### ✨ Features
