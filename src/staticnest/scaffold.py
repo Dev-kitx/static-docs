@@ -4,8 +4,8 @@ from pathlib import Path
 
 
 DEFAULT_SITE_TOML = """title = "My Docs"
-tagline = "Documentation built with Staticnest"
-description = "A polished documentation site powered by Staticnest."
+tagline = "Documentation built with Static Docs"
+description = "A polished documentation site powered by Static Docs."
 base_url = "/"
 content_dir = "content"
 output_dir = "dist"
@@ -19,7 +19,7 @@ accent = "#2563eb"
 github = "https://github.com/"
 
 [theme]
-name = "nest"
+name = "static-docs"
 """
 
 
@@ -42,7 +42,7 @@ DEFAULT_NAVIGATION_YML = """- title: Overview
 
 DEFAULT_INDEX_MD = """# Welcome
 
-Staticnest gives you a clean docs shell with built-in navigation, search, and a right-side table of contents.
+Static Docs gives you a clean docs shell with built-in navigation, search, and a right-side table of contents.
 
 ## Start here
 
@@ -59,26 +59,26 @@ Use the CLI to preview and build your documentation site.
 ## Preview locally
 
 ```bash
-staticnest preview
+static-docs preview
 ```
 
 ## Build the site
 
 ```bash
-staticnest build
+static-docs build
 ```
 """
 
 
 DEFAULT_CONFIGURATION_MD = """# Configuration
 
-Staticnest reads your site settings from `site.toml`.
+Static Docs reads your site settings from `site.toml`.
 
 ## Theme
 
 ```toml
 [theme]
-name = "nest"
+name = "static-docs"
 ```
 
 ## Navigation

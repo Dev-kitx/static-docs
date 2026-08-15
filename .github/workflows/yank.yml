@@ -3,18 +3,18 @@ name: Yank Release (Rollback)
 # Use this workflow to yank a bad PyPI release.
 #
 # Yanking marks a specific version as "bad" so that:
-#   - `pip install staticnest`         → skips the yanked version
-#   - `pip install staticnest==X.Y.Z`  → still installs it (with a warning)
+#   - `pip install static-docs`         → skips the yanked version
+#   - `pip install static-docs==X.Y.Z`  → still installs it (with a warning)
 #
 # Yanking is REVERSIBLE — you can un-yank from the PyPI release page if needed.
 # It is the recommended rollback mechanism before a patch release is ready.
 #
-# Un-yanking: go to https://pypi.org/manage/project/staticnest/releases/,
+# Un-yanking: go to https://pypi.org/manage/project/static-docs/releases/,
 # expand the version, and click "Un-yank".
 #
 # REQUIRED SECRET
 # ───────────────
-# Add a PyPI API token (scoped to the `staticnest` project) as a repository
+# Add a PyPI API token (scoped to the `static-docs` project) as a repository
 # secret named PYPI_API_TOKEN in Settings → Secrets and variables → Actions.
 # This workflow uses a token (not OIDC) because the PyPI yank endpoint does
 # not yet support Trusted Publishing.
@@ -62,11 +62,11 @@ jobs:
           twine yank \
             --repository-url "$REPO_URL" \
             --reason "${{ inputs.reason }}" \
-            staticnest==${{ inputs.version }}
+            static-docs==${{ inputs.version }}
 
       - name: Summary
         run: |
-          echo "### Yanked staticnest==${{ inputs.version }} from ${{ inputs.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Yanked static-docs==${{ inputs.version }} from ${{ inputs.target }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Reason:** ${{ inputs.reason }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

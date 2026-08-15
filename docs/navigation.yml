@@ -1,0 +1,31 @@
+- title: Overview
+  page: index.md
+- title: Start
+  items:
+    - page: getting-started.md
+    - page: cli-reference.md
+    - page: configuration.md
+- title: Authoring
+  items:
+    - page: authoring.md
+    - page: components.md
+    - page: api-docs.md
+- title: Production
+  items:
+    - page: search-seo-llms.md
+    - page: deployment.md
+- navigation-bar:
+    github:
+      title: GitHub
+      link: https://github.com/Dev-kitx/static-docs
+      logo: https://github.githubassets.com/favicons/favicon.svg
+    resources:
+      title: Resources
+      items:
+        - name: PyPI
+          link: https://pypi.org/project/static-docs/
+        - name: Issues
+          link: https://github.com/Dev-kitx/static-docs/issues
+- issues:
+    title: Issues
+    link: https://github.com/Dev-kitx/static-docs/issues

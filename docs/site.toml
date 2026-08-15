@@ -1,0 +1,23 @@
+title = "Static Docs"
+tagline = "Python documentation sites without a frontend build step"
+description = "Complete documentation for Static Docs CLI features, authoring patterns, API docs, search, SEO, LLM files, and deployment."
+site_url = "https://dev-kitx.github.io/static-docs"
+base_url = "/static-docs/"
+content_dir = "content"
+output_dir = "dist"
+nav_file = "navigation.yml"
+
+[brand]
+name = "Static Docs"
+accent = "#f46e00"
+
+[links]
+github = "https://github.com/Dev-kitx/static-docs"
+
+[repo]
+url = "https://github.com/Dev-kitx/static-docs"
+branch = "main"
+docs_dir = "docs/content"
+
+[theme]
+name = "static-docs"

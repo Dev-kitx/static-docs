@@ -20,6 +20,7 @@ class NavigationConfigTests(unittest.TestCase):
             title="Test Docs",
             tagline="",
             description="Test site",
+            site_url="/",
             base_url="/",
             content_dir=root / "content",
             output_dir=root / "dist",
@@ -27,7 +28,7 @@ class NavigationConfigTests(unittest.TestCase):
             brand_name="Test Docs",
             accent="#2563eb",
             github_url="https://example.com/fallback-github",
-            theme_name="nest",
+            theme_name="staticnest",
             theme_dir=None,
         )
 
@@ -132,7 +133,7 @@ accent = "#2563eb"
 github = "https://example.com/fallback-github"
 
 [theme]
-name = "nest"
+name = "staticnest"
 """
             )
             self.write_navigation(
@@ -161,7 +162,7 @@ name = "nest"
             self.assertIn('href="https://github.com/example/repo/issues">Question? Give us feedback</a>', html)
             self.assertIn('href="https://github.com/example/repo" aria-label="GitHub"', html)
             self.assertIn('src="https://example.com/logo.svg"', html)
-            self.assertIn(">Resources</summary>", html)
+            self.assertIn('data-top-nav-trigger aria-expanded="false">Resources</button>', html)
             self.assertNotIn(">Issues</a>", html)
 
 

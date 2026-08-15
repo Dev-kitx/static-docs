@@ -11,13 +11,13 @@ Example getting started page.
 
 1. Clone the repo
 
-   ```sh
+   ```bash
    git clone https://github.com/github_username/repo_name.git
    ```
 
 2. Install NPM packages
 
-   ```sh
+   ```bash
    npm install
    ```
 

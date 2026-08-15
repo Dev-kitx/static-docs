@@ -106,7 +106,7 @@ class HighlightCodeTests(unittest.TestCase):
         self.assertIn("<span", result)
 
     def test_toml_produces_spans(self) -> None:
-        result = highlight_code("toml", 'name = "nest"')
+        result = highlight_code("toml", 'name = "staticnest"')
         self.assertIn("<span", result)
 
     def test_json_produces_spans(self) -> None:
@@ -171,6 +171,14 @@ class RenderCodeBlockTests(unittest.TestCase):
 
 
 class RenderMarkdownTests(unittest.TestCase):
+    def test_code_fence_title_is_rendered(self) -> None:
+        page = render_markdown('```python title="app.py"\nx = 1\n```')
+        self.assertIn('class="code-block-title">app.py</span>', page.html)
+
+    def test_code_fence_highlight_lines_are_preserved(self) -> None:
+        page = render_markdown('```python hl_lines="1"\nx = 1\n```')
+        self.assertIn('class="hll"', page.html)
+
     def test_h1_extracted_as_title(self) -> None:
         page = render_markdown("# Hello World\n\nSome text.")
         self.assertEqual(page.title, "Hello World")
@@ -209,6 +217,13 @@ class RenderMarkdownTests(unittest.TestCase):
         page = render_markdown("```python\nx = 1\n```")
         self.assertIn("code-block", page.html)
 
+    def test_mermaid_fence_renders_mermaid_block(self) -> None:
+        page = render_markdown("```mermaid\ngraph TD;\nA-->B;\n```")
+        self.assertIn('class="mermaid-block"', page.html)
+        self.assertIn('class="mermaid"', page.html)
+        self.assertIn("graph TD;", page.html)
+        self.assertNotIn("code-block", page.html)
+
     def test_summary_extracted(self) -> None:
         page = render_markdown("# Title\n\nThis is the summary sentence.")
         self.assertEqual(page.summary, "This is the summary sentence.")
@@ -241,6 +256,71 @@ class RenderMarkdownTests(unittest.TestCase):
     def test_h2_appears_in_html(self) -> None:
         page = render_markdown("# Title\n\n## Sub-section\n\nText")
         self.assertIn("<h2", page.html)
+
+    def test_heading_copy_anchor_is_added(self) -> None:
+        page = render_markdown("# Title\n\n## Sub-section\n\nText")
+        self.assertIn('class="heading-with-anchor"', page.html)
+        self.assertIn('data-heading-anchor="sub-section"', page.html)
+        self.assertIn('aria-label="Copy section link"', page.html)
+
+    def test_badges_directive_renders_badges(self) -> None:
+        page = render_markdown(':::badges\n::badge label="Beta" type="warning"\n:::')
+        self.assertIn('class="badges"', page.html)
+        self.assertIn('class="badge badge-warning"', page.html)
+        self.assertIn("Beta", page.html)
+
+    def test_staticnest_directive_inside_code_fence_stays_code(self) -> None:
+        page = render_markdown(
+            '```md\n:::cards\n::card title="Configuration" description="Configure site.toml."\n:::\n```'
+        )
+        self.assertIn("code-block", page.html)
+        self.assertIn(":::cards", page.html)
+        self.assertNotIn('&lt;div class="cards"', page.html)
+
+    def test_staticnest_directive_inside_four_backtick_fence_stays_code(self) -> None:
+        page = render_markdown(
+            "````md\n"
+            "## create_client\n\n"
+            "```python\n"
+            "create_client(project: str) -> StaticnestClient\n"
+            "```\n\n"
+            ":::params\n"
+            '::param name="project" description="Project name."\n'
+            ":::\n"
+            "````"
+        )
+        self.assertIn("code-block", page.html)
+        self.assertIn(":::params", page.html)
+        self.assertNotIn('&lt;div class="params"', page.html)
+        self.assertNotIn('class="params"', page.html)
+
+    def test_steps_directive_renders_ordered_steps(self) -> None:
+        page = render_markdown(':::steps\n::step title="Install"\nRun `pip install staticnest-cli`.\n:::')
+        self.assertIn('class="steps"', page.html)
+        self.assertIn('class="step-marker">1</span>', page.html)
+        self.assertIn("Install", page.html)
+
+    def test_params_directive_renders_api_table(self) -> None:
+        page = render_markdown(
+            ':::params\n::param name="config" type="Path | str" required="yes" description="Path to `site.toml`."\n:::'
+        )
+        self.assertIn('class="params"', page.html)
+        self.assertIn("<th>Parameter</th>", page.html)
+        self.assertIn("<code>config</code>", page.html)
+        self.assertIn('class="param-required">Required</span>', page.html)
+
+    def test_note_callout_keeps_note_variant(self) -> None:
+        page = render_markdown(':::callout type="note" title="Note"\nPurple callout.\n:::')
+        self.assertIn("callout-note", page.html)
+        self.assertIn("admonition note", page.html)
+        self.assertIn('class="callout-icon"', page.html)
+
+    def test_files_directive_renders_collapsible_tree(self) -> None:
+        page = render_markdown(":::files\ncontent/\n    index.md\n    about/\n        index.md\n:::")
+        self.assertIn('class="files file-tree"', page.html)
+        self.assertIn('<details class="file-tree-folder"', page.html)
+        self.assertIn('<summary class="file-tree-row file-tree-folder-row"', page.html)
+        self.assertIn('class="file-tree-row file-tree-file-row"', page.html)
 
 
 if __name__ == "__main__":

@@ -51,7 +51,10 @@ def _make_page(
         url=url or build_url(rel),
         title=title,
         nav_title=title,
+        description="",
         summary="",
+        badge="",
+        status="",
         html="<p>content</p>",
         headings=[],
         search_text="",
@@ -59,6 +62,8 @@ def _make_page(
         template=None,
         is_index=is_index,
         draft=False,
+        hide_toc=False,
+        hide_sidebar=False,
     )
 
 
@@ -114,7 +119,7 @@ class LoadConfigTests(unittest.TestCase):
             'title = "Docs"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
             + extra +
             '[brand]\nname = "Docs"\n[links]\ngithub = "https://github.com/"\n'
-            '[theme]\nname = "nest"\n'
+            '[theme]\nname = "staticnest"\n'
         )
         return config
 
@@ -149,10 +154,22 @@ class LoadConfigTests(unittest.TestCase):
             root = Path(tmp)
             (root / "site.toml").write_text(
                 'title = "MyTitle"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
-                '[links]\ngithub = "#"\n[theme]\nname = "nest"\n'
+                '[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
             )
             cfg = load_config(root / "site.toml")
             self.assertEqual(cfg.brand_name, "MyTitle")
+
+    def test_loads_repo_edit_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = load_config(
+                self._write_config(
+                    tmp,
+                    '[repo]\nurl = "https://github.com/acme/docs"\nbranch = "stable"\ndocs_dir = "docs/content"\n',
+                )
+            )
+            self.assertEqual(cfg.repo_url, "https://github.com/acme/docs")
+            self.assertEqual(cfg.repo_branch, "stable")
+            self.assertEqual(cfg.repo_docs_dir, "docs/content")
 
 
 # ---------------------------------------------------------------------------
@@ -502,11 +519,12 @@ class RenderTopNavHtmlTests(unittest.TestCase):
         self.assertIn("Blog", html)
         self.assertIn("blog.example.com", html)
 
-    def test_group_with_children_uses_details(self) -> None:
+    def test_group_with_children_uses_controlled_dropdown(self) -> None:
         child = TopNavItem(title="Guide", url="/guide/")
         parent = TopNavItem(title="Resources", items=[child])
         html = render_top_nav_html([parent])
-        self.assertIn("<details", html)
+        self.assertIn('data-top-nav-trigger aria-expanded="false"', html)
+        self.assertIn('class="top-nav-menu"', html)
         self.assertIn("Guide", html)
 
     def test_active_class_for_root_url(self) -> None:
@@ -583,10 +601,10 @@ class BuildSiteIntegrationTests(unittest.TestCase):
             "# Getting Started\n\n## Quick Start\n\nRun `pip install staticnest`.\n"
         )
         (root / "site.toml").write_text(
-            'title = "Docs"\ndescription = "A test"\nbase_url = "/"\n'
+            'title = "Docs"\ndescription = "A test"\nsite_url = "https://example.com"\nbase_url = "/"\n'
             'content_dir = "content"\noutput_dir = "dist"\n'
             '[brand]\nname = "Docs"\n[links]\ngithub = "https://github.com/"\n'
-            '[theme]\nname = "nest"\n'
+            '[theme]\nname = "staticnest"\n'
         )
         return root / "site.toml"
 
@@ -613,17 +631,39 @@ class BuildSiteIntegrationTests(unittest.TestCase):
             result = build_site(config_path)
             self.assertTrue((result.config.output_dir / "404.html").exists())
 
+    def test_404_html_contains_search(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = self._make_project(tmp)
+            result = build_site(config_path)
+            content = (result.config.output_dir / "404.html").read_text()
+            self.assertIn("data-not-found-search", content)
+            self.assertIn("data-not-found-results", content)
+
     def test_nojekyll_created(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             config_path = self._make_project(tmp)
             result = build_site(config_path)
             self.assertTrue((result.config.output_dir / ".nojekyll").exists())
 
-    def test_assets_css_created(self) -> None:
+    def test_staticnest_assets_created(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             config_path = self._make_project(tmp)
             result = build_site(config_path)
-            self.assertTrue((result.config.output_dir / "assets" / "site.css").exists())
+            self.assertTrue((result.config.output_dir / "assets" / "css" / "base.css").exists())
+            self.assertTrue((result.config.output_dir / "assets" / "css" / "geist.css").exists())
+            self.assertTrue((result.config.output_dir / "assets" / "fonts" / "Geist.woff2").exists())
+            self.assertTrue((result.config.output_dir / "assets" / "img" / "favicon.ico").exists())
+            self.assertFalse((result.config.output_dir / "assets" / "js").exists())
+            self.assertFalse((result.config.output_dir / "assets" / "site.css").exists())
+
+    def test_staticnest_layout_rendered(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = self._make_project(tmp)
+            result = build_site(config_path)
+            content = (result.config.output_dir / "index.html").read_text()
+            self.assertIn("assets/css/base.css", content)
+            self.assertIn("group/sidebar-wrapper", content)
+            self.assertIn("On This Page", content)
 
     def test_pages_list_populated(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -641,11 +681,84 @@ class BuildSiteIntegrationTests(unittest.TestCase):
             )
             (root / "site.toml").write_text(
                 'title = "Docs"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
-                '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "nest"\n'
+                '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
             )
             result = build_site(root / "site.toml")
             titles = [p.title for p in result.pages]
             self.assertNotIn("Secret", titles)
+
+    def test_page_metadata_description_badge_and_status_render(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content").mkdir()
+            (root / "content" / "index.md").write_text(
+                "---\n"
+                "title: Home\n"
+                "description: Custom page description.\n"
+                "badge: Guide\n"
+                "status: beta\n"
+                "---\n"
+                "# Home\n\nWelcome.\n"
+            )
+            (root / "site.toml").write_text(
+                'title = "Docs"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
+                '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
+            )
+            result = build_site(root / "site.toml")
+            page = result.pages[0]
+            content = (result.config.output_dir / "index.html").read_text()
+            self.assertEqual(page.description, "Custom page description.")
+            self.assertEqual(page.summary, "Custom page description.")
+            self.assertIn("Custom page description.", content)
+            self.assertIn('class="page-badge">Guide</span>', content)
+            self.assertIn('class="page-status page-status-beta">Beta</span>', content)
+
+    def test_page_metadata_can_hide_toc_and_sidebar(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content").mkdir()
+            (root / "content" / "index.md").write_text(
+                "---\nhide_toc: true\nhide_sidebar: true\n---\n# Home\n\n## Section\n"
+            )
+            (root / "site.toml").write_text(
+                'title = "Docs"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
+                '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
+            )
+            result = build_site(root / "site.toml")
+            page = result.pages[0]
+            content = (result.config.output_dir / "index.html").read_text()
+            self.assertTrue(page.hide_toc)
+            self.assertTrue(page.hide_sidebar)
+            self.assertNotIn("On This Page", content)
+            self.assertNotIn('data-sidebar="content"', content)
+
+    def test_edit_this_page_link_rendered_from_repo_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content").mkdir()
+            (root / "content" / "index.md").write_text("# Home\n\n## Section\n")
+            (root / "site.toml").write_text(
+                'title = "Docs"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
+                '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
+                '[repo]\nurl = "https://github.com/acme/docs"\nbranch = "main"\ndocs_dir = "docs/content"\n'
+            )
+            result = build_site(root / "site.toml")
+            content = (result.config.output_dir / "index.html").read_text()
+            self.assertIn("Edit this page on GitHub", content)
+            self.assertIn("https://github.com/acme/docs/edit/main/docs/content/index.md", content)
+
+    def test_local_markdown_images_are_copied_next_to_page_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content" / "docs" / "images").mkdir(parents=True)
+            (root / "content" / "docs" / "images" / "diagram.png").write_bytes(b"png")
+            (root / "content" / "docs" / "guide.md").write_text("# Guide\n\n![Diagram](images/diagram.png)\n")
+            (root / "site.toml").write_text(
+                'title = "Docs"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
+                '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
+            )
+            result = build_site(root / "site.toml")
+            self.assertTrue((result.config.output_dir / "docs" / "guide" / "images" / "diagram.png").exists())
 
     def test_live_reload_script_injected_when_enabled(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -676,6 +789,65 @@ class BuildSiteIntegrationTests(unittest.TestCase):
             import json
             site_json = json.loads((result.config.output_dir / "assets" / "site.json").read_text())
             self.assertEqual(site_json["version"], "abc123")
+
+    def test_real_search_index_written(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = self._make_project(tmp)
+            result = build_site(config_path)
+            import json
+            index = json.loads((result.config.output_dir / "assets" / "search-index.json").read_text())
+            self.assertGreaterEqual(len(index), 2)
+            self.assertIn("excerpt", index[0])
+            self.assertTrue(any("Quick Start" in page["headings"] for page in index))
+            self.assertTrue(any(page["url"].endswith("#quick-start") for page in index))
+
+    def test_seo_files_and_meta_written(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = self._make_project(tmp)
+            result = build_site(config_path)
+            sitemap = (result.config.output_dir / "sitemap.xml").read_text()
+            robots = (result.config.output_dir / "robots.txt").read_text()
+            html = (result.config.output_dir / "index.html").read_text()
+            self.assertIn("<urlset", sitemap)
+            self.assertIn("<loc>https://example.com/</loc>", sitemap)
+            self.assertIn("Sitemap:", robots)
+            self.assertIn('rel="canonical"', html)
+            self.assertIn('property="og:title"', html)
+            self.assertIn('name="twitter:card"', html)
+
+    def test_llm_files_written(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = self._make_project(tmp)
+            result = build_site(config_path)
+            llms = (result.config.output_dir / "llms.txt").read_text()
+            full = (result.config.output_dir / "llms-full.txt").read_text()
+            self.assertIn("# Docs", llms)
+            self.assertIn("Getting Started", llms)
+            self.assertIn("Run `pip install staticnest`.", full)
+            self.assertTrue((result.config.output_dir / "llms-pages" / "docs-getting-started.md").exists())
+
+    def test_api_docs_generated_from_config_before_build(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "content").mkdir()
+            (root / "content" / "index.md").write_text("# Home\n")
+            (root / "src" / "pkg").mkdir(parents=True)
+            (root / "src" / "pkg" / "api.py").write_text(
+                'def build(name: str):\n'
+                '    """Build a thing.\n\n'
+                '    :param name: Thing name.\n'
+                '    """\n'
+            )
+            (root / "site.toml").write_text(
+                'title = "Docs"\nbase_url = "/"\ncontent_dir = "content"\noutput_dir = "dist"\n'
+                '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
+                '[api_docs]\nenabled = true\nsource = "src/pkg"\noutput = "content/api"\npackage = "pkg"\n'
+            )
+
+            result = build_site(root / "site.toml")
+
+            self.assertTrue((root / "content" / "api" / "pkg-api.md").exists())
+            self.assertTrue((result.config.output_dir / "api" / "pkg-api" / "index.html").exists())
 
 
 if __name__ == "__main__":

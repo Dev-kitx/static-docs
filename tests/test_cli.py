@@ -85,6 +85,14 @@ class BuildParserTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parser.parse_args(["unknown-command"])
 
+    def test_api_generate_command(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(["api", "generate", "--source", "src", "--output", "content/api"])
+        self.assertEqual(args.command, "api")
+        self.assertEqual(args.path, "generate")
+        self.assertEqual(args.source, "src")
+        self.assertEqual(args.output, "content/api")
+
 
 class MainFunctionTests(unittest.TestCase):
     def _make_site(self, tmp_dir: str) -> Path:
@@ -94,7 +102,7 @@ class MainFunctionTests(unittest.TestCase):
         (root / "site.toml").write_text(
             'title = "Test"\ndescription = ""\nbase_url = "/"\n'
             'content_dir = "content"\noutput_dir = "dist"\n'
-            '[brand]\nname = "Test"\n[links]\ngithub = "#"\n[theme]\nname = "nest"\n'
+            '[brand]\nname = "Test"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
         )
         return root
 
@@ -176,6 +184,31 @@ class MainFunctionTests(unittest.TestCase):
                 with patch("sys.argv", ["staticnest", "preview", "--config", str(config)]):
                     main()
                 mock_serve.assert_called_once()
+
+    def test_preview_accepts_config_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = self._make_site(tmp_dir)
+            with patch("staticnest.cli.serve_site") as mock_serve:
+                with patch("sys.argv", ["staticnest", "preview", "--config", str(root)]):
+                    main()
+                mock_serve.assert_called_once()
+                self.assertEqual(mock_serve.call_args[0][0], root.resolve() / "site.toml")
+
+    def test_api_generate_command_returns_0(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            source = root / "src"
+            source.mkdir()
+            (source / "mod.py").write_text(
+                'def hello(name: str):\n    """Say hello.\n\n    :param name: Person name.\n    """\n'
+            )
+            with patch(
+                "sys.argv",
+                ["staticnest", "api", "generate", "--source", str(source), "--output", str(root / "content" / "api")],
+            ):
+                result = main()
+            self.assertEqual(result, 0)
+            self.assertTrue((root / "content" / "api" / "index.md").exists())
 
 
 if __name__ == "__main__":

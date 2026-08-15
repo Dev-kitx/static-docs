@@ -1,30 +1,30 @@
 ---
-title: Staticnest Documentation
+title: Static Docs Documentation
 nav_title: Overview
 order: 0
-summary: Learn how to scaffold, write, preview, customize, and deploy documentation sites with Staticnest.
+summary: Learn how to scaffold, write, preview, customize, and deploy documentation sites with Static Docs.
 ---
 
-# Staticnest Documentation
+# Static Docs Documentation
 
-Staticnest is a Python static site generator for documentation. It gives you a polished docs layout, explicit navigation, local preview with live reload, and a built-in theme without forcing users into a frontend framework.
+Static Docs is a Python static site generator for documentation. It gives you a polished docs layout, explicit navigation, local preview with live reload, and a built-in theme without forcing users into a frontend framework.
 
-## What Staticnest gives you
+## What Static Docs gives you
 
-- `staticnest init` to scaffold a new documentation project
+- `static-docs init` to scaffold a new documentation project
 - `site.toml` for site settings and theme selection
 - `navigation.yml` for explicit sidebar and header navigation
 - Markdown pages under `content/`
 - Local preview with rebuilds and live reload
-- A built-in `nest` docs theme
+- A built-in `static-docs` docs theme
 - GitHub Pages support through `gh-deploy`
 
 ### Typical workflow
 
-1. Create a project with `staticnest init`.
+1. Create a project with `static-docs init`.
 2. Write docs in `content/`.
 3. Organize pages in `navigation.yml`.
-4. Preview locally with `staticnest preview`.
+4. Preview locally with `static-docs preview`.
 5. Build or deploy when you are ready.
 
 ## Start here next
@@ -36,8 +36,8 @@ Staticnest is a Python static site generator for documentation. It gives you a p
 
 ## Typical workflow
 
-1. Create a project with `staticnest init`.
+1. Create a project with `static-docs init`.
 2. Write docs in `content/`.
 3. Organize pages in `navigation.yml`.
-4. Preview locally with `staticnest preview`.
+4. Preview locally with `static-docs preview`.
 5. Build or deploy when you are ready.

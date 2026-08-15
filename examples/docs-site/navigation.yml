@@ -3,10 +3,18 @@
 - title: Guides
   items:
     - page: docs/getting-started.md
+    - page: docs/configuration.md
+    - page: docs/components.md
+    - page: docs/authoring.md
+    - page: docs/deployment.md
+- title: API Reference
+  items:
+    - page: api/index.md
+    - page: api/demo_api-client.md
 - navigation-bar:
     github:
       title: GitHub
-      link: https://github.com/Dev-kitx/staticnest-cli
+      link: https://github.com/Dev-kitx/static-docs
       logo: https://github.githubassets.com/favicons/favicon.svg
     resources:
       title: Resources
@@ -15,6 +23,8 @@
           link: /docs/getting-started/
         - name: Configuration
           link: /docs/configuration/
+        - name: Components
+          link: /docs/components/
 - issues:
     title: Issues
-    link: https://github.com/Dev-kitx/staticnest-cli/issues
+    link: https://github.com/Dev-kitx/static-docs/issues

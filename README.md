@@ -1,20 +1,26 @@
-# Staticnest
+# Static Docs
 
 > A pure-Python static site generator for polished documentation sites — strong typography, left sidebar navigation, right table of contents, client-side full-text search, and live reload in dev mode.
 
-[![PyPI](https://img.shields.io/pypi/v/staticnest-cli)](https://pypi.org/project/staticnest-cli/)
-[![Python](https://img.shields.io/pypi/pyversions/staticnest-cli)](https://pypi.org/project/staticnest-cli/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/static-docs?style=for-the-badge&labelColor=2d3748&color=ffd166)](https://pypi.org/project/static-docs/)
+[![Python](https://img.shields.io/pypi/pyversions/static-docs?style=for-the-badge&labelColor=023047&color=8ecae6)](https://pypi.org/project/static-docs/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-95d5b2?style=for-the-badge&labelColor=1b4332)](LICENSE)
+
+[![Pure Python](https://img.shields.io/badge/Pure%20Python-no%20node-ffd166?style=for-the-badge&labelColor=2d3748)](https://pypi.org/project/static-docs/)
+[![Markdown Powered](https://img.shields.io/badge/Markdown-powered-8ecae6?style=for-the-badge&labelColor=023047)](#features)
+[![Static Output](https://img.shields.io/badge/Static%20HTML-fast%20docs-95d5b2?style=for-the-badge&labelColor=1b4332)](#quick-start)
+[![Docs Theme](https://img.shields.io/badge/Docs%20Theme-built--in-ffafcc?style=for-the-badge&labelColor=5a189a)](#features)
 
 ---
 
 ## Features
 
-- **Zero runtime dependencies** — pure Python, no Node, no build system
+- **Python-only runtime** — no Node or frontend build step
 - **TOML-based configuration** — single `site.toml` controls everything
 - **YAML navigation** — explicit sidebar order, nested groups, top-bar links
 - **Front matter** — YAML (`---`) or TOML (`+++`) blocks for title, summary, draft, order, and template overrides
-- **Syntax highlighting** — Pygments-powered with the `xcode` style
+- **Pymdown-powered Markdown** — Python-Markdown plus `pymdown-extensions` for richer Markdown behavior
+- **Syntax highlighting** — Pygments-powered fenced code blocks
 - **Table of contents** — auto-generated per page, scroll-synced right panel
 - **Client-side search** — full-text index baked into each page at build time
 - **Live reload dev server** — watches content and config files, pushes reload via polling
@@ -28,18 +34,18 @@
 ### From PyPI
 
 ```bash
-pip install staticnest-cli
+pip install static-docs
 ```
 
 ### From source (local / contributor)
 
 ```bash
-git clone https://github.com/Dev-kitx/staticnest-cli.git
-cd staticnest-cli
-pip install -e .
+git clone https://github.com/Dev-kitx/static-docs.git
+cd static-docs
+uv sync --locked --extra dev
 ```
 
-The `-e` flag installs in editable mode — changes to `src/staticnest/` are reflected immediately without reinstalling. The `staticnest` command is available as soon as this completes.
+The project uses `uv.lock` for repeatable contributor and CI installs. The `static-docs` command is available through `uv run static-docs`.
 
 ---
 
@@ -47,13 +53,13 @@ The `-e` flag installs in editable mode — changes to `src/staticnest/` are ref
 
 ```bash
 # 1. Scaffold a new project
-staticnest init my-docs
+static-docs init my-docs
 
 # 2. Preview with live reload
-staticnest preview --config my-docs/site.toml
+static-docs preview --config my-docs/site.toml
 
 # 3. Build for production
-staticnest build --config my-docs/site.toml
+static-docs build --config my-docs/site.toml
 ```
 
 The scaffolded directory contains:
@@ -68,12 +74,24 @@ my-docs/
 
 ---
 
+## Project documentation
+
+This repository includes a full Static Docs documentation site under `docs/`.
+
+```bash
+static-docs build --config docs/site.toml
+```
+
+The docs source explains configuration, authoring, components, API docs generation, search, SEO, LLM files, and GitHub Actions deployment.
+
+---
+
 ## CLI reference
 
 All commands follow the pattern:
 
 ```
-staticnest <command> [options]
+static-docs <command> [options]
 ```
 
 ### `init`
@@ -81,23 +99,23 @@ staticnest <command> [options]
 Scaffold a new project directory.
 
 ```bash
-staticnest init [path]
+static-docs init [path]
 ```
 
-| Argument | Default | Description |
-|---|---|---|
-| `path` | `.` | Directory to initialise. Created if it does not exist. |
+| Argument | Default | Description                                           |
+| -------- | ------- | ----------------------------------------------------- |
+| `path`   | `.`     | Directory to initialise. Created if it does not exist. |
 
 ### `build`
 
 Build the site to `output_dir` (configured in `site.toml`).
 
 ```bash
-staticnest build --config <path/to/site.toml>
+static-docs build --config <path/to/site.toml>
 ```
 
-| Flag | Default | Description |
-|---|---|---|
+| Flag       | Default     | Description                          |
+| ---------- | ----------- | ------------------------------------ |
 | `--config` | `site.toml` | Path to the site configuration file. |
 
 ### `preview` / `serve`
@@ -105,26 +123,26 @@ staticnest build --config <path/to/site.toml>
 Start a local dev server with live reload. Both names are equivalent.
 
 ```bash
-staticnest preview --config <path/to/site.toml> [--host HOST] [--port PORT]
+static-docs preview --config <path/to/site.toml> [--host HOST] [--port PORT]
 ```
 
-| Flag | Default | Description |
-|---|---|---|
+| Flag       | Default     | Description                          |
+| ---------- | ----------- | ------------------------------------ |
 | `--config` | `site.toml` | Path to the site configuration file. |
-| `--host` | `127.0.0.1` | Network interface to bind. |
-| `--port` | `8000` | Port to listen on. |
+| `--host`   | `127.0.0.1` | Network interface to bind.           |
+| `--port`   | `8000`      | Port to listen on.                   |
 
 ### `publish`
 
 Copy the built output to a publish destination.
 
 ```bash
-staticnest publish --config <path/to/site.toml> [--destination DIR]
+static-docs publish --config <path/to/site.toml> [--destination DIR]
 ```
 
-| Flag | Default | Description |
-|---|---|---|
-| `--config` | `site.toml` | Path to the site configuration file. |
+| Flag            | Default                  | Description                                 |
+| --------------- | ------------------------ | ------------------------------------------- |
+| `--config`      | `site.toml`              | Path to the site configuration file.        |
 | `--destination` | `output_dir` from config | Override the target directory for this run. |
 
 ### `gh-deploy`
@@ -132,15 +150,15 @@ staticnest publish --config <path/to/site.toml> [--destination DIR]
 Build, add GitHub Pages artifacts (`.nojekyll`, `404.html`), and force-push to a deploy branch.
 
 ```bash
-staticnest gh-deploy --config <path/to/site.toml> [--remote REMOTE] [--branch BRANCH] [--message MSG]
+static-docs gh-deploy --config <path/to/site.toml> [--remote REMOTE] [--branch BRANCH] [--message MSG]
 ```
 
-| Flag | Default | Description |
-|---|---|---|
-| `--config` | `site.toml` | Path to the site configuration file. |
-| `--remote` | `origin` | Git remote to push to. |
-| `--branch` | `gh-pages` | Branch to force-push the output to. |
-| `--message` | `Deploy staticnest site` | Commit message for the deploy commit. |
+| Flag        | Default                   | Description                           |
+| ----------- | ------------------------- | ------------------------------------- |
+| `--config`  | `site.toml`               | Path to the site configuration file.  |
+| `--remote`  | `origin`                  | Git remote to push to.                |
+| `--branch`  | `gh-pages`                | Branch to force-push the output to.   |
+| `--message` | `Deploy static-docs site` | Commit message for the deploy commit. |
 
 ---
 
@@ -157,9 +175,7 @@ output_dir  = "dist"
 name = "My Project"
 
 [theme]
-name = "nest"
-# Optional: enable theme overrides from a local directory
-# dir = "theme"
+name = "static-docs"
 
 [nav]
 file = "navigation.yml"
@@ -217,53 +233,45 @@ draft: false
 ---
 ```
 
-| Field | Description |
-|---|---|
-| `title` | Page `<title>` and `<h1>` (overrides first `#` heading). |
-| `nav_title` | Shorter label used only in the sidebar. |
-| `order` | Integer sort key within a navigation group. |
-| `summary` | Used in `<meta description>` and search results. |
-| `template` | Select an alternate template from `theme/templates/`. |
-| `draft` | Set `true` to exclude from the build output. |
+| Field       | Description                                                |
+| ----------- | ---------------------------------------------------------- |
+| `title`     | Page `<title>` and `<h1>` (overrides first `#` heading).   |
+| `nav_title` | Shorter label used only in the sidebar.                    |
+| `order`     | Integer sort key within a navigation group.                |
+| `summary`   | Used in `<meta description>` and search results.           |
+| `template`  | Select an alternate template from `theme/templates/`.      |
+| `draft`     | Set `true` to exclude from the build output.               |
 
 ---
 
-## Theme overrides
+## Theme
 
-The built-in `nest` theme requires no local files. To customise:
+Static Docs includes one built-in docs theme:
 
 ```toml
 [theme]
-name = "nest"
-dir  = "theme"
+name = "static-docs"
 ```
-
-When `dir` is set the generator will:
-
-- copy `theme/assets/*` into `dist/assets/`
-- auto-load `theme/assets/custom.css` after the built-in stylesheet
-- auto-load `theme/assets/custom.js` after the built-in script
-- use `theme/templates/page.html` as the outer HTML shell
-- use `template: <name>.html` front matter to select other templates
 
 ---
 
 ## Repository layout
 
 ```text
-staticnest-cli/
+static-docs/
 ├── src/staticnest/      # package source
 │   ├── cli.py           # argparse entry point
 │   ├── site.py          # build / publish / deploy orchestration
-│   ├── markdown.py      # Markdown → HTML renderer (Pygments-backed)
+│   ├── markdown.py      # Python-Markdown/pymdown renderer
 │   ├── theme.py         # CSS, JS, and HTML template
 │   ├── devserver.py     # live-reload HTTP server
 │   └── scaffold.py      # init command scaffolding
-├── examples/docs-site/  # built-in example site
+├── docs/                # documentation site source
 │   ├── content/
 │   ├── navigation.yml
 │   └── site.toml
 ├── tests/               # pytest test suite
+├── uv.lock              # locked development and CI dependencies
 ├── pyproject.toml
 └── README.md
 ```
@@ -272,10 +280,10 @@ staticnest-cli/
 
 ## Local development
 
-### Run the example site
+### Run the documentation site
 
 ```bash
-staticnest preview --config examples/docs-site/site.toml
+uv run static-docs preview --config docs/site.toml
 ```
 
 Open `http://127.0.0.1:8000` in your browser. The server rebuilds and reloads automatically when you save a file.
@@ -283,24 +291,22 @@ Open `http://127.0.0.1:8000` in your browser. The server rebuilds and reloads au
 ### Run tests
 
 ```bash
-pip install pytest
-pytest
+uv sync --locked --extra dev
+uv run pytest
 ```
 
 ---
 
 ## Releasing
 
-Releases are fully automated via [Release Please](https://github.com/googleapis/release-please) and [Trusted Publishing](https://docs.pypi.org/trusted-publishers/). Merging a Release Please PR bumps the version and triggers the PyPI publish workflow automatically — no manual wheel building needed.
+Releases are automated through the shared Dev-kitx release workflow and PyPI Trusted Publishing. Publishing a GitHub Release triggers the PyPI workflow automatically.
 
 To verify a release artifact locally before publishing, maintainers can build with:
 
 ```bash
-pip install build
-pyproject-build
+uv sync --locked --extra dev
+uv build
 ```
-
-> **Note:** `build.py` in the project root is a legacy shim that shadows `python -m build`. Use `pyproject-build` until it is removed.
 
 ---
 

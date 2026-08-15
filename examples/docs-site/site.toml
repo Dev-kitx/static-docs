@@ -1,5 +1,5 @@
-title = "Staticnest"
-tagline = "Python static docs with a polished nest theme"
+title = "Static Docs"
+tagline = "Python static docs with a Static Docs theme"
 description = "A custom Python static website generator focused on stylish documentation sites."
 base_url = "/"
 content_dir = "content"
@@ -7,11 +7,18 @@ output_dir = "dist"
 nav_file = "navigation.yml"
 
 [brand]
-name = "Staticnest"
+name = "Static Docs"
 accent = "#f46e00"
 
 [links]
 github = "https://github.com/"
 
 [theme]
-name = "nest"
+name = "static-docs"
+
+[api_docs]
+enabled = true
+source = "src/demo_api"
+output = "content/api"
+package = "demo_api"
+title = "API Reference"

@@ -13,52 +13,52 @@ from staticnest.theme import (
 
 
 class GetThemePresetTests(unittest.TestCase):
-    def test_returns_nest_preset(self) -> None:
-        preset = get_theme_preset("nest")
+    def test_returns_static_docs_preset(self) -> None:
+        preset = get_theme_preset("static-docs")
         self.assertIsInstance(preset, dict)
         self.assertIn("accent", preset)
 
     def test_none_returns_all_presets(self) -> None:
         result = get_theme_preset(None)
-        self.assertIn("nest", result)
+        self.assertIn("static-docs", result)
 
     def test_unknown_theme_raises(self) -> None:
         with self.assertRaises(ValueError):
             get_theme_preset("nonexistent-theme")
 
     def test_accent_override_applied(self) -> None:
-        preset = get_theme_preset("nest", accent="#ff0000")
+        preset = get_theme_preset("static-docs", accent="#ff0000")
         self.assertEqual(preset["accent"], "#ff0000")
         self.assertEqual(preset["active_text"], "#ff0000")
 
     def test_no_accent_override_uses_default(self) -> None:
-        preset = get_theme_preset("nest")
-        self.assertEqual(preset["accent"], THEME_PRESETS["nest"]["accent"])
+        preset = get_theme_preset("static-docs")
+        self.assertEqual(preset["accent"], THEME_PRESETS["static-docs"]["accent"])
 
     def test_original_preset_not_mutated(self) -> None:
-        original_accent = THEME_PRESETS["nest"]["accent"]
-        get_theme_preset("nest", accent="#123456")
-        self.assertEqual(THEME_PRESETS["nest"]["accent"], original_accent)
+        original_accent = THEME_PRESETS["static-docs"]["accent"]
+        get_theme_preset("static-docs", accent="#123456")
+        self.assertEqual(THEME_PRESETS["static-docs"]["accent"], original_accent)
 
 
 class RenderCssTests(unittest.TestCase):
     def test_replaces_all_tokens(self) -> None:
-        preset = get_theme_preset("nest")
+        preset = get_theme_preset("static-docs")
         css = render_css(preset)
         self.assertNotIn("{{", css)
         self.assertNotIn("}}", css)
 
     def test_contains_accent_color(self) -> None:
-        preset = get_theme_preset("nest", accent="#abcdef")
+        preset = get_theme_preset("static-docs", accent="#abcdef")
         css = render_css(preset)
         self.assertIn("#abcdef", css)
 
     def test_returns_string(self) -> None:
-        preset = get_theme_preset("nest")
+        preset = get_theme_preset("static-docs")
         self.assertIsInstance(render_css(preset), str)
 
     def test_contains_css_variable_declarations(self) -> None:
-        preset = get_theme_preset("nest")
+        preset = get_theme_preset("static-docs")
         css = render_css(preset)
         self.assertIn("--accent:", css)
         self.assertIn("--bg:", css)

@@ -3,12 +3,16 @@ requires = ["setuptools>=80", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "staticnest-cli"
+name = "static-docs"
 dynamic = ["version"]
-description = "A custom Python static site generator for polished documentation websites."
+description = "A pure-Python static documentation site generator."
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = ["pygments>=2.0"]
+dependencies = [
+  "markdown>=3.6",
+  "pymdown-extensions>=10.0",
+  "pygments>=2.0",
+]
 authors = [{name="Akash B"}]
 maintainers = [
   {name = "Akash B", email = "akashbasa8@gmail.com"}
@@ -17,13 +21,13 @@ license = "MIT"
 license-files = ["LICENSE"]
 
 [project.urls]
-homepage = "https://github.com/Dev-kitx/staticnest-cli"
-source = "https://github.com/Dev-kitx/staticnest-cli"
-download = "https://github.com/Dev-kitx/staticnest-cli/releases"
-changelog = "https://github.com/Dev-kitx/staticnest-cli/blob/main/CHANGELOG.md"
-releasenotes = "https://github.com/Dev-kitx/staticnest-cli/releases"
-documentation = "https://github.com/Dev-kitx/staticnest-cli#readme"
-issues = "https://github.com/Dev-kitx/staticnest-cli/issues"
+homepage = "https://github.com/Dev-kitx/static-docs"
+source = "https://github.com/Dev-kitx/static-docs"
+download = "https://github.com/Dev-kitx/static-docs/releases"
+changelog = "https://github.com/Dev-kitx/static-docs/blob/main/CHANGELOG.md"
+releasenotes = "https://github.com/Dev-kitx/static-docs/releases"
+documentation = "https://github.com/Dev-kitx/static-docs#readme"
+issues = "https://github.com/Dev-kitx/static-docs/issues"
 
 [tool.setuptools_scm]
 # Basic config https://setuptools-scm.readthedocs.io/en/latest/
@@ -37,9 +41,11 @@ testpaths = [
 ]
 
 [project.optional-dependencies]
+api = ["docstring-parser>=0.18"]
 dev = ["pytest", "pytest-cov", "coverage", "mypy>=1.10", "types-setuptools"]
 
 [project.scripts]
+static-docs = "staticnest.cli:main"
 staticnest = "staticnest.cli:main"
 
 [tool.setuptools]
@@ -47,3 +53,12 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+staticnest = [
+  "vendor/shadcn/LICENSE",
+  "vendor/shadcn/css/base.css",
+  "vendor/shadcn/css/geist.css",
+  "vendor/shadcn/fonts/*.woff2",
+  "vendor/shadcn/img/*",
+]
