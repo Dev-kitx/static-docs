@@ -24,7 +24,7 @@ def _make_project(tmp: str) -> Path:
     (root / "site.toml").write_text(
         'title = "Docs"\ndescription = "Test"\nbase_url = "/"\n'
         'content_dir = "content"\noutput_dir = "dist"\n'
-        '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "nest"\n'
+        '[brand]\nname = "Docs"\n[links]\ngithub = "#"\n[theme]\nname = "staticnest"\n'
     )
     return root / "site.toml"
 

@@ -1,13 +1,7 @@
-name: Release Please
+name: Release static-docs
 
-# Release Please watches commits pushed to main.
-# It maintains a "Release PR" that:
-#   - bumps the version in pyproject.toml (or tracks it via tags)
-#   - auto-generates a CHANGELOG from conventional commit messages
-#
-# When you merge the Release PR:
-#   - Release Please creates the git tag and GitHub Release
-#   - That "release published" event triggers publish.yml automatically
+# Watches commits pushed to main.
+# Delegates release PR/tag/release creation to the shared Dev-kitx workflow.
 #
 # CONVENTIONAL COMMITS (determines version bump)
 # ───────────────────────────────────────────────
@@ -19,42 +13,22 @@ name: Release Please
 #
 # SETUP REQUIRED (one-time)
 # ──────────────────────────
-# No secrets needed — uses GITHUB_TOKEN which is provided automatically.
-# Optionally enable "Allow GitHub Actions to create and approve pull requests"
-# in Settings → Actions → General → Workflow permissions.
+# Create a GitHub App and add to repo:
+#   vars.APP_ID          — the app's numeric ID
+#   secrets.PRIVATE_KEY  — the app's private key (PEM)
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'README.md'
 
 permissions:
-  contents: write        # create tags and releases
-  pull-requests: write   # open/update the Release PR
+  contents: write
+  pull-requests: write
 
 jobs:
-  release-please:
-    name: Release Please
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Generate GitHub App token
-        uses: actions/create-github-app-token@v3
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
-
-      - uses: Dev-kitx/smart-gh-release@v1
-        id: release
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          auto_version: true
-          auto_release: false
-          include_contributors: true
-
-      - name: Summary
-        run: |
-          echo "Tag:   ${{ steps.release.outputs.tag_name }}"
-          echo "Bump:  ${{ steps.release.outputs.bump_level }}"
-          echo "URL:   ${{ steps.release.outputs.release_url }}"
-          echo "Files: ${{ steps.release.outputs.assets_uploaded }}"
+  create-release-pr:
+    name: Create Release PR
+    uses: Dev-kitx/.github/.github/workflows/github-release.yml@main
+    secrets: inherit
