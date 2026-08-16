@@ -2,6 +2,13 @@
 
 
 
+
+## [v0.3.0] - 2026-08-16
+
+### ✨ Features
+
+- prepare static-docs release (#28) ([2739ff8](https://github.com/Dev-kitx/static-docs/commit/2739ff8c650e6f3276c1974a0f3f08ab9f9eff8d)) by @aakashbasa
+
 ## [v0.2.1] - 2026-04-02
 
 ### ⏪ Reverts
