@@ -1594,6 +1594,11 @@ def render_staticnest_page(
         '</div></div><div class="sticky -bottom-1 z-10 h-16 shrink-0 bg-gradient-to-t from-background via-background/80 to-background/50 blur-xs"></div></div></div>'
     )
     toc_fallback_html = '<span class="text-muted-foreground text-[0.8rem]">No headings</span>'
+    edit_link_html = (
+        f'<a class="block hover:text-foreground" href="{escape(edit_url, quote=True)}">Edit this page on GitHub</a>'
+        if edit_url
+        else ""
+    )
     toc_sidebar_html = "" if hide_toc else (
         '<div class="sticky top-[calc(var(--header-height)+1px)] ml-auto hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] w-72 flex-col gap-4 overflow-hidden overscroll-none pb-8 xl:flex">'
         '<div class="h-(--top-spacing) shrink-0"></div>'
@@ -1607,7 +1612,7 @@ def render_staticnest_page(
         '</div>'
         '<div class="mt-8 flex flex-col gap-3 border-t border-border pt-6 text-muted-foreground">'
         f'<a class="block hover:text-foreground" href="{escape(feedback_url, quote=True)}">Question? Give us feedback</a>'
-        f'{"<a class=\"block hover:text-foreground\" href=\"" + escape(edit_url, quote=True) + "\">Edit this page on GitHub</a>" if edit_url else ""}'
+        f'{edit_link_html}'
         '</div></div><div class="h-12"></div></div></div>'
     )
     live_reload_tag = ""
